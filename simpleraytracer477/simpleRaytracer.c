@@ -426,26 +426,26 @@ int main(int argc, char **argv)
 		    if (closestObj!=-1)
 		    {
 		    	Vec3 p;
-			Vec3 normal;
-			Vec3 toLight;
-			double diffuse;
-			p = add(r.a,mult(r.b,tmin));
-			normal = add(p,mult(spheres[closestObj].center,-1));
-			normal = normalize(normal);
+				Vec3 normal;
+				Vec3 toLight;
+				double diffuse;
+				p = add(r.a,mult(r.b,tmin));
+				normal = add(p,mult(spheres[closestObj].center,-1));
+				normal = normalize(normal);
 
-			toLight = add(light,mult(p,-1));
+				toLight = add(light,mult(p,-1));
 
-			toLight = normalize(toLight);
+				toLight = normalize(toLight);
 
-			diffuse = dot(normal,toLight);
-			if (diffuse<0) diffuse=0;
+				diffuse = dot(normal,toLight);
+				if (diffuse<0) diffuse=0;
 
-			image[i][j].r = spheres[closestObj].color.r*diffuse;
-			image[i][j].g = spheres[closestObj].color.g*diffuse;
-			image[i][j].b = spheres[closestObj].color.b*diffuse;
-			image[i][j].r += spheres[closestObj].color.r*0.05;
-			image[i][j].g += spheres[closestObj].color.g*0.05;
-			image[i][j].b += spheres[closestObj].color.b*0.05;
+				image[i][j].r = spheres[closestObj].color.r*diffuse;
+				image[i][j].g = spheres[closestObj].color.g*diffuse;
+				image[i][j].b = spheres[closestObj].color.b*diffuse;
+				image[i][j].r += spheres[closestObj].color.r*0.05;
+				image[i][j].g += spheres[closestObj].color.g*0.05;
+				image[i][j].b += spheres[closestObj].color.b*0.05;
 		    }
 	    }
     writeImage(outFileName);
