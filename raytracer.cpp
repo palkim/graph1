@@ -40,6 +40,11 @@ double pixel_height;
 double half_pixel_width;
 double half_pixel_height;
 
+char* image_name_ptr;
+unsigned char* image;
+
+
+
 double length(parser::Vec3f v) {
     return sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
 }
@@ -110,12 +115,22 @@ void printVec(parser::Vec3f a) {
     printf("(%f, %f, %f)", a.x, a.y, a.z);
 }
 
-int main(int argc, char* argv[])
-{
-    // Sample usage for reading an XML scene file
-    parser::Scene scene;
+void initImage() {
+    int i = 0;
+    for (int y = 0; y < image_height; ++y)
+    {
+        for (int x = 0; x < image_width; ++x)
+        {
+            image[i++] = background_color.x;
+            image[i++] = background_color.y;
+            image[i++] = background_color.z;
+        }
+    }
+}
 
-    scene.loadFromXml(argv[1]);
+void readXml(char *fname) {
+    parser::Scene scene;
+    scene.loadFromXml(fname);
 
     //general data
     background_color = scene.background_color;
@@ -129,6 +144,18 @@ int main(int argc, char* argv[])
     meshes = scene.meshes;
     triangles = scene.triangles;
     spheres = scene.spheres;
+}
+
+int main(int argc, char* argv[])
+{
+    // Sample usage for reading an XML scene file
+    
+    if (argc < 2) {
+        printf("Usage: ./raytracer <xml file>");
+        return 1;
+    }
+
+    readXml(argv[1]);
 
     for (int c = 0; c < cameras.size(); c++) {
         
@@ -155,30 +182,41 @@ int main(int argc, char* argv[])
         pixel_height = (near_plane.w - near_plane.z)/(double) image_height;
         half_pixel_height = pixel_height*0.5;
 
-        char* image_name_ptr = &image_name[0];
+        image_name_ptr = &image_name[0];
         
 
-        unsigned char* image = new unsigned char [image_width * image_height * 3];
+        image = new unsigned char [image_width * image_height * 3];
 
         //init image
-        int i = 0;
+        initImage();
+        int i,j,k;
+        for (i = 0; i < image_width; i++) {
+            for (j = 0; j < image_height; j++) {
+                Ray r;
+                r = generateRay(i,j);
+                
+
+            }
+        }
+
+        /*int i = 0;
         for (int y = 0; y < image_height; ++y)
         {
             for (int x = 0; x < image_width; ++x)
             {
                 Ray ray = generateRay(x,y);
-                /*
                 printf("ray.a: ");
                 printVec(ray.a);
                 printf("ray.b: ");
                 printVec(ray.b);
                 printf("\n");
-                */
+
+               
                 image[i++] = background_color.x;
                 image[i++] = background_color.y;
                 image[i++] = background_color.z;
             }
-        }
+        }*/
 
         write_ppm(image_name_ptr, image, image_width, image_height);
     }

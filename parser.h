@@ -75,11 +75,7 @@ namespace parser
         float radius;
     };
 
-    struct Ray
-    {
-	    Vec3f a;
-	    Vec3f b;
-    };
+    
 
     struct Scene
     {
