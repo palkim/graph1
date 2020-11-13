@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h> //I add this
+#include <limits> // I add this
 #include "parser.h"
 #include "ppm.h"
 
@@ -24,6 +25,9 @@ std::vector<parser::Vec3f> vertex_data;
 std::vector<parser::Mesh> meshes;
 std::vector<parser::Triangle> triangles;
 std::vector<parser::Sphere> spheres;
+int numSpheres;
+int numTriangles;
+int numMeshes;
 
  //camera data
 parser::Vec3f position;
@@ -103,6 +107,50 @@ parser::Vec3f mult(parser::Vec3f a, double c) {
     return tmp;
 }
 
+double intersectSphere(Ray r, parser::Sphere s) {
+    double A,B,C;
+    double delta;
+
+    parser::Vec3f scenter = vertex_data[s.center_vertex_id];
+    float sradius = s.radius;
+
+    double t,t1,t2;
+    int i;
+
+    C = (r.a.x-scenter.x)*(r.a.x-scenter.x)+(r.a.y-scenter.y)*(r.a.y-scenter.y)+(r.a.z-scenter.z)*(r.a.z-scenter.z)-sradius*sradius;
+
+	B = 2*r.b.x*(r.a.x-scenter.x)+2*r.b.y*(r.a.y-scenter.y)+2*r.b.z*(r.a.z-scenter.z);
+	
+	A = r.b.x*r.b.x+r.b.y*r.b.y+r.b.z*r.b.z;
+
+    delta = B*B-4*A*C;
+
+    if (delta < 0) return -1;
+    else if (delta == 0) {
+        t = -B / (2*A);
+        return t;
+    } else {
+        double tmp;
+        t1 = (-B + sqrt(delta)) / 2*A;
+        t2 = (-B - sqrt(delta)) / 2*A;
+
+        if (t1 > 0 && t2 > 0) {
+            if (t1 > t2) {
+                return t2;
+            } else {
+                return t1;
+            }
+        } else if (t1 > 0) {
+            return t1;
+        } else if (t2 > 0) {
+            return t2;
+        } else {
+            return -1;
+        }
+    }
+    return -1;
+}
+
 Ray generateRay(int i, int j) {
     
     parser::Vec3f e = position;
@@ -167,6 +215,10 @@ void readXml(char *fname) {
     meshes = scene.meshes;
     triangles = scene.triangles;
     spheres = scene.spheres;
+
+    numSpheres = spheres.size();
+    numTriangles = triangles.size();
+    numMeshes = meshes.size();
 }
 
 int main(int argc, char* argv[])
@@ -216,11 +268,29 @@ int main(int argc, char* argv[])
         for (i = 0; i < image_width; i++) {
             for (j = 0; j < image_height; j++) {
                 Ray r;
+                
+                double tmin = std::numeric_limits<double>::max();
+                int closestObj = -1;
+
                 //generate primary ray
                 r = generateRay(i,j);
                 
-                
-                
+                for (k = 0; k < numSpheres; k++) {
+                    double t;
+
+                    t = intersectSphere(r, spheres[k]);
+                    //asıl tmini geçtik, sonra bakarız
+                    if (t >= 1) {
+                        if (t < tmin) {
+                            tmin = t;
+                            closestObj = k;
+                        }
+                    }
+                }
+                printf("closest: %d", closestObj);
+//                if (closestObj != -1) {
+
+//                }
                 //find first/closest intersecting object
                 //apply shading
                 //find color at pixel given cam, ray and recursion depth
