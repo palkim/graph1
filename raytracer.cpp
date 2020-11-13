@@ -107,7 +107,7 @@ Ray generateRay(int i, int j) {
     
     parser::Vec3f e = position;
     parser::Vec3f m = add(e ,(mult(gaze,near_distance)));
-    parser::Vec3f q = add(m ,mult(parallel, near_plane.x) + mult(up, near_plane.w));
+    parser::Vec3f q = add(m ,add(mult(parallel, near_plane.x), mult(up, near_plane.w)));
 
     float su = (i + 0.5) * ((near_plane.y - near_plane.x) / image_width);
     float sv = (j + 0.5) * ((near_plane.w - near_plane.z) / image_height);
@@ -218,6 +218,9 @@ int main(int argc, char* argv[])
                 Ray r;
                 //generate primary ray
                 r = generateRay(i,j);
+                
+                
+                
                 //find first/closest intersecting object
                 //apply shading
                 //find color at pixel given cam, ray and recursion depth
