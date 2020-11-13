@@ -83,6 +83,16 @@ parser::Vec3f add(parser::Vec3f a, parser::Vec3f b) {
     return tmp;
 }
 
+parser::Vec3f subt(parser::Vec3f a, parser::Vec3f b) {
+    
+    parser::Vec3f tmp;
+    tmp.x = a.x-b.x;
+    tmp.y = a.y-b.y;
+    tmp.z = a.z-b.z;
+
+    return tmp;
+}
+
 parser::Vec3f mult(parser::Vec3f a, double c) {
     
     parser::Vec3f tmp;
@@ -95,13 +105,25 @@ parser::Vec3f mult(parser::Vec3f a, double c) {
 
 Ray generateRay(int i, int j) {
     
-    Ray tmp;
+    parser::Vec3f e = position;
+    parser::Vec3f m = add(e ,(mult(gaze,near_distance)));
+    parser::Vec3f q = add(m ,mult(parallel, near_plane.x) + mult(up, near_plane.w));
+
+    float su = (i + 0.5) * ((near_plane.y - near_plane.x) / image_width);
+    float sv = (j + 0.5) * ((near_plane.w - near_plane.z) / image_height);
+    parser::Vec3f s =  subt(add(q, mult(parallel, su)), mult(up, sv));
+    Ray my_ray;
+    my_ray.a = e;
+    my_ray.b = normalize(subt(s,e));
+    return my_ray;
+    
+    /*Ray tmp;
 
     parser::Vec3f s_parallel, s_up, s;
 
     tmp.a = position;
 
-    s_parallel = mult(parallel, near_plane.x + (i*pixel_width) + half_pixel_width);
+    s_parallel = mult(parallel, near_plane.x + (i*pixel_width) + half_pixel_width);//left(x),right(y),bottom(z),top(w)
     s_up = mult(up, near_plane.z + (j*pixel_height)+half_pixel_height);
 
     s = add(s_parallel, s_up);
@@ -109,6 +131,7 @@ Ray generateRay(int i, int j) {
     tmp.b = add(mult(gaze, near_distance), s);
 
     return tmp;
+    */
 }
 
 void printVec(parser::Vec3f a) {
@@ -193,7 +216,12 @@ int main(int argc, char* argv[])
         for (i = 0; i < image_width; i++) {
             for (j = 0; j < image_height; j++) {
                 Ray r;
+                //generate primary ray
                 r = generateRay(i,j);
+                //find first/closest intersecting object
+                //apply shading
+                //find color at pixel given cam, ray and recursion depth
+                //image->setPixelValueFor i & j
                 
 
             }
