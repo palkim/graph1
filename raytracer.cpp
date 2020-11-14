@@ -28,6 +28,17 @@ struct ImagePlane
     float top ;
 };
 
+struct Object 
+{
+    int material_index ;
+    parser::Vec3f normal_vector ;
+    parser::Vec3f intersection_point ;
+    bool isIntersects ;
+    double intersects_at_t ;
+};
+
+
+
 //general data
 parser::Vec3i background_color ;
 float shadow_ray_epsilon ;
@@ -219,7 +230,6 @@ parser::Vec3f get_ray_point_at_t(Ray ray , float t ) {
     result = element_wise_addition(ray.origin , d_mult_t ) ;
 
     return result;
-
 }
 
 void setCameraData(parser::Camera cam ) {
@@ -293,6 +303,37 @@ Ray get_ray_to_pixel (int row, int col ) {
     return result;
 }
 
+Object intersect_ray_with_object (Ray ray ) {
+
+    Object result ;
+    result.isIntersects = false ;
+    result.intersects_at_t = std::numeric_limits<double>::max() ;
+
+    for (int sphere_index = 0 ; sphere_index < numSpheres ; sphere_index++ ) {
+        parser::Sphere sphere = spheres[sphere_index] ;
+        int sphere_m_id = sphere.material_id ;
+        int sphere_c_id = sphere.center_vertex_id ;
+        float sphere_r = sphere.radius ;
+
+        parser::Material spere_m = materials[sphere_m_id] ;
+        parser::Vec3f sphere_c = vertex_data[sphere_c_id] ;
+
+        
+
+    }
+}
+
+Color get_color_of_pixel (Ray ray , int recursion_depth ) {
+
+    Object intersection_object = intersect_ray_with_object(ray) ;
+    Color background = {background_color.x, background_color.y, background_color.z} ;
+    if (!intersection_object.isIntersects) return background ;
+    else {
+        Color orange = {255, 165, 0} ;
+        return orange ;
+    }
+}
+
 int main(int argc , char* argv[] )
 {
     if (argc < 2 ) {
@@ -312,9 +353,15 @@ int main(int argc , char* argv[] )
 
         for (int row = 0 ; row < image_height ; row++ ) {
             for (int col=0 ; col < image_width ; col++ ) {
-                Ray ray_to_pixel;
-                ray_to_pixel = get_ray_to_pixel(row, col ) ;
                 
+                Ray ray_to_pixel ;
+                Color pixel_color ;
+
+                ray_to_pixel = get_ray_to_pixel(row, col ) ;
+                //below here recursion depth is zero since this is not a mirror ray
+                pixel_color = get_color_of_pixel(ray_to_pixel, 0 ) ;
+
+                setPixelInImage(row, col , pixel_color );
             }
         }
        
