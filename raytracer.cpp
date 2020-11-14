@@ -30,11 +30,11 @@ struct ImagePlane
 
 struct Object 
 {
-    int material_index ;
+    parser::Material material;
     parser::Vec3f normal_vector ;
     parser::Vec3f intersection_point ;
     bool isIntersects ;
-    double intersects_at_t ;
+    float intersects_at_t ;
 };
 
 
@@ -65,80 +65,76 @@ float camera_imagePlane_distance ;
 int image_width ;
 int image_height ;
 std::string image_name ;
-double pixel_width ;
-double pixel_height ;
-double half_pixel_width ;
-double half_pixel_height ;
 
 char* image_name_ptr ;
 unsigned char* image ;
 
 float length(parser::Vec3f a ) {
-    return sqrt(a.x * a.x + a.y * a.y + a.z * a.z ) ;
+    return sqrt((float) a.x * (float) a.x + (float) a.y * (float) a.y + (float) a.z * (float) a.z ) ;
 }
 
 parser::Vec3f normalize(parser::Vec3f a ) {
     parser::Vec3f result ;
     float d ;
 
-    d = length(a) ;
-    result.x = a.x/d ;
-    result.y = a.y/d ;
-    result.z = a.z/d ;
+    d = (float) length(a) ;
+    result.x = (float) a.x/d ;
+    result.y = (float) a.y/d ;
+    result.z = (float) a.z/d ;
 
     return result ;
 }
 
 parser::Vec3f cross_product (parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = a.y * b.z - a.z * b.y ;
-    result.y = a.z * b.x - a.x * b.z ;
-    result.z = a.x * b.y - a.y * b.x ;
+    result.x = (float) a.y * (float) b.z - (float) a.z * (float) b.y ;
+    result.y = (float) a.z * (float) b.x - (float) a.x * (float) b.z ;
+    result.z = (float) a.x * (float) b.y - (float) a.y * (float) b.x ;
 
     return result ;
 }
 
 float dot_product (parser::Vec3f a , parser::Vec3f b ) {
-    float product = 0 ;
-    product += a.x * b.x ;
-    product += a.y * b.y ;
-    product += a.z * b.z ;
+    float product = (float) 0 ;
+    product += (float) a.x * (float) b.x ;
+    product += (float) a.y * (float) b.y ;
+    product += (float) a.z * (float) b.z ;
 
     return product ;
 }
 
 parser::Vec3f scalar_multiplication(parser::Vec3f a , float b ) {
     parser::Vec3f result ;
-    result.x = a.x * b ;
-    result.y = a.y * b ;
-    result.z = a.z * b ;
+    result.x = a.x * (float) b ;
+    result.y = a.y * (float) b ;
+    result.z = a.z * (float) b ;
 
     return result ;
 }
 
 parser::Vec3f element_wise_multiplication(parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = a.x * b.x ;
-    result.y = a.y * b.y ;
-    result.z = a.z * b.z ;
+    result.x = (float) a.x * (float) b.x ;
+    result.y = (float) a.y * (float) b.y ;
+    result.z = (float) a.z * (float) b.z ;
 
     return result ;
 }
 
 parser::Vec3f element_wise_addition(parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = a.x + b.x ;
-    result.y = a.y + b.y ;
-    result.z = a.z + b.z ;
+    result.x = (float) a.x + (float) b.x ;
+    result.y = (float) a.y + (float) b.y ;
+    result.z = (float) a.z + (float) b.z ;
 
     return result ;
 }
 
 parser::Vec3f element_wise_subtraction(parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = a.x - b.x ;
-    result.y = a.y - b.y ;
-    result.z = a.z - b.z ;
+    result.x = (float) a.x - (float) b.x ;
+    result.y = (float) a.y - (float) b.y ;
+    result.z = (float) a.z - (float) b.z ;
 
     return result ;
 }
@@ -225,7 +221,7 @@ parser::Vec3f get_ray_point_at_t(Ray ray , float t ) {
     parser::Vec3f result;
     
     parser::Vec3f d_mult_t;
-    d_mult_t = scalar_multiplication(ray.direction , t ) ;
+    d_mult_t = scalar_multiplication(ray.direction , (float) t ) ;
 
     result = element_wise_addition(ray.origin , d_mult_t ) ;
 
@@ -253,12 +249,6 @@ void setCameraData(parser::Camera cam ) {
     v = normalize(v ) ;
 
     w = normalize(w ) ;
-    
-    pixel_width = (image_plane.left - image_plane.right ) / (float ) image_width ;
-    half_pixel_width = pixel_width * 0.5 ;
-
-    pixel_height = (image_plane.top - image_plane.bottom ) / (float ) image_height ;
-    half_pixel_height = pixel_height * 0.5 ;
 }
 
 Ray get_ray_to_pixel (int row, int col ) {
@@ -288,8 +278,8 @@ Ray get_ray_to_pixel (int row, int col ) {
     parser::Vec3f u_mult_su ;
     parser::Vec3f v_mult_sv ;
     parser::Vec3f suu_subt_svv ;
-    su = (col + 0.5 ) * (image_plane.right - image_plane.left ) / image_width ;
-    sv = (row + 0.5 ) * (image_plane.top - image_plane.bottom ) / image_height ;
+    su = ((float) col + 0.5 ) * ((float) image_plane.right - (float) image_plane.left ) / (float) image_width ;
+    sv = ((float) row + 0.5 ) * ((float) image_plane.top - (float) image_plane.bottom ) / (float) image_height ;
     u_mult_su = scalar_multiplication(u , su ) ;
     v_mult_sv = scalar_multiplication(v, sv ) ;
     suu_subt_svv = element_wise_subtraction(u_mult_su, v_mult_sv ) ;
@@ -307,29 +297,83 @@ Object intersect_ray_with_object (Ray ray ) {
 
     Object result ;
     result.isIntersects = false ;
-    result.intersects_at_t = std::numeric_limits<double>::max() ;
+    float intersects_t_max = std::numeric_limits<float>::max() ;
 
     for (int sphere_index = 0 ; sphere_index < numSpheres ; sphere_index++ ) {
         parser::Sphere sphere = spheres[sphere_index] ;
         int sphere_m_id = sphere.material_id ;
         int sphere_c_id = sphere.center_vertex_id ;
-        float sphere_r = sphere.radius ;
-
-        parser::Material spere_m = materials[sphere_m_id] ;
-        parser::Vec3f sphere_c = vertex_data[sphere_c_id] ;
-
+        parser::Material sphere_m ;
+        parser::Vec3f sphere_c ;
+        parser::Vec3f ray_origin ;
+        parser::Vec3f ray_direction ;
+        float sphere_r ;
+        sphere_m = materials[sphere_m_id] ;
         
+        sphere_c = vertex_data[sphere_c_id] ;
+        sphere_r = sphere.radius ;
 
+        float a ;
+        float b ;
+        float c ;
+        float determinant ;
+        
+        a = dot_product(ray_direction , ray_direction ) ;  
+        parser::Vec3f o_subt_c = element_wise_subtraction(ray_origin, sphere_c ) ;
+        b = (float) 2 * dot_product(ray_direction , o_subt_c ) ;
+        c = dot_product(o_subt_c , o_subt_c ) - (float) pow(sphere_r,2) ;
+        determinant = (float) pow(b , 2 ) - ((float) 4 * a * c ) ;
+
+        if (determinant < (float) 0) {
+            continue ;
+        } else {
+            float t1 ;
+            float t2 ;
+            float eq1 = dot_product(ray_direction , ray_direction );
+            float eq2 = dot_product(scalar_multiplication(ray_direction, -1) , o_subt_c ) ;
+            float determinant_sqrt = sqrt(determinant ) ;    
+
+            t1 = (eq2 + determinant_sqrt ) / eq1 ;
+            t2 = (eq2 - determinant_sqrt ) / eq1 ;
+            //NOTE: should i put an intersection epsilon value ?
+            if (t2 < (float) 0 && t1 < (float) 0) {
+                continue ;
+            } else {
+                result.isIntersects = true ;
+                if (t1 < (float) 0 && t2 < intersects_t_max) {
+                    intersects_t_max = t2 ;
+                    result.intersects_at_t = t2 ;
+                } else if (t2 < (float) 0 && t1 < intersects_t_max) {
+                    intersects_t_max = t1 ;
+                    result.intersects_at_t = t1 ;
+                } else if (t1 < t2 && t1 < intersects_t_max) {
+                    intersects_t_max = t1 ;
+                    result.intersects_at_t = t1 ;
+                } else if (t2 <= t1 && t2 < intersects_t_max) {
+                    intersects_t_max = t2 ;
+                    result.intersects_at_t = t2 ;
+                }
+            }
+
+            result.material = sphere_m ;
+            result.intersection_point = get_ray_point_at_t(ray, result.intersects_at_t) ;
+            parser::Vec3f normal = element_wise_subtraction(result.intersection_point , sphere_c ) ;
+            result.normal_vector = normalize(normal) ;
+
+        }
     }
+    return result ;
 }
 
 Color get_color_of_pixel (Ray ray , int recursion_depth ) {
 
     Object intersection_object = intersect_ray_with_object(ray) ;
     Color background = {background_color.x, background_color.y, background_color.z} ;
-    if (!intersection_object.isIntersects) return background ;
+    if (!intersection_object.isIntersects) {
+        return background ;
+    } 
     else {
-        Color orange = {255, 165, 0} ;
+        Color orange = {255, 255, 255} ;
         return orange ;
     }
 }
