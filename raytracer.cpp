@@ -6,11 +6,18 @@
 
 typedef unsigned char RGB[3];
 
-// data representing ray(t)=a(origin/camera position)+t b(direction/calculated with gaze and distance between camera and image plane)
+// data representing ray(t)=a(origin/camera cam_position)+t b(direction/calculated with gaze and distance between camera and image plane)
 struct Ray
 {
     parser::Vec3f a;
     parser::Vec3f b;
+};
+//data representing color
+struct Color
+{
+    int R;
+    int G;
+    int B;
 };
 
 //general data
@@ -29,8 +36,8 @@ int numSpheres;
 int numTriangles;
 int numMeshes;
 
- //camera data
-parser::Vec3f position;
+//camera data
+parser::Vec3f cam_position;
 parser::Vec3f gaze;
 parser::Vec3f up;
 parser::Vec3f parallel;
@@ -46,8 +53,6 @@ double half_pixel_height;
 
 char* image_name_ptr;
 unsigned char* image;
-
-
 
 double length(parser::Vec3f v) {
     return sqrt(v.x*v.x+v.y*v.y+v.z*v.z);
@@ -65,125 +70,63 @@ parser::Vec3f normalize(parser::Vec3f v) {
     return tmp;
 }
 
-parser::Vec3f cross(parser::Vec3f a, parser::Vec3f b) {
-    
-    parser::Vec3f tmp;
+parser::Vec3f cross_product (parser::Vec3f a, parser::Vec3f b) {
+    parser::Vec3f result;
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
 
-    tmp.x = a.y*b.z-b.y*a.z;
-    tmp.y = b.x*a.z-a.x*b.z;
-    tmp.z = a.x-b.y-b.x*a.y;
-
-    return tmp;
-
+    return result;
 }
 
-parser::Vec3f add(parser::Vec3f a, parser::Vec3f b) {
-    
-    parser::Vec3f tmp;
-    tmp.x = a.x+b.x;
-    tmp.y = a.y+b.y;
-    tmp.z = a.z+b.z;
+float dot_product (parser::Vec3f a, parser::Vec3f b) {
+    float product = 0;
+    product += a.x * b.x;
+    product += a.y * b.y;
+    product += a.z * b.z;
 
-    return tmp;
+    return product;
 }
 
-parser::Vec3f subt(parser::Vec3f a, parser::Vec3f b) {
-    
-    parser::Vec3f tmp;
-    tmp.x = a.x-b.x;
-    tmp.y = a.y-b.y;
-    tmp.z = a.z-b.z;
+parser::Vec3f scalar_multiplication(parser::Vec3f a, float b) {
+    parser::Vec3f result;
+    result.x = a.x * b;
+    result.y = a.y * b;
+    result.z = a.z * b;
 
-    return tmp;
+    return result;
 }
 
-parser::Vec3f mult(parser::Vec3f a, double c) {
-    
-    parser::Vec3f tmp;
-    tmp.x = a.x*c;
-    tmp.y = a.y*c;
-    tmp.z = a.z*c;
+parser::Vec3f element_wise_multiplication(parser::Vec3f a, parser::Vec3f b) {
+    parser::Vec3f result;
+    result.x = a.x * b.x;
+    result.y = a.y * b.y;
+    result.z = a.z * b.z;
 
-    return tmp;
+    return result;
 }
 
-double intersectSphere(Ray r, parser::Sphere s) {
-    double A,B,C;
-    double delta;
+parser::Vec3f element_wise_addition(parser::Vec3f a, parser::Vec3f b) {
+    parser::Vec3f result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
 
-    parser::Vec3f scenter = vertex_data[s.center_vertex_id];
-    float sradius = s.radius;
-
-    double t,t1,t2;
-    int i;
-
-    C = (r.a.x-scenter.x)*(r.a.x-scenter.x)+(r.a.y-scenter.y)*(r.a.y-scenter.y)+(r.a.z-scenter.z)*(r.a.z-scenter.z)-sradius*sradius;
-
-	B = 2*r.b.x*(r.a.x-scenter.x)+2*r.b.y*(r.a.y-scenter.y)+2*r.b.z*(r.a.z-scenter.z);
-	
-	A = r.b.x*r.b.x+r.b.y*r.b.y+r.b.z*r.b.z;
-
-    delta = B*B-4*A*C;
-
-    if (delta < 0) return -1;
-    else if (delta == 0) {
-        t = -B / (2*A);
-        return t;
-    } else {
-        double tmp;
-        t1 = (-B + sqrt(delta)) / 2*A;
-        t2 = (-B - sqrt(delta)) / 2*A;
-
-        if (t1 > 0 && t2 > 0) {
-            if (t1 > t2) {
-                return t2;
-            } else {
-                return t1;
-            }
-        } else if (t1 > 0) {
-            return t1;
-        } else if (t2 > 0) {
-            return t2;
-        } else {
-            return -1;
-        }
-    }
-    return -1;
+    return result;
 }
 
-Ray generateRay(int i, int j) {
-    
-    parser::Vec3f e = position;
-    parser::Vec3f m = add(e ,(mult(gaze,near_distance)));
-    parser::Vec3f q = add(m ,add(mult(parallel, near_plane.x), mult(up, near_plane.w)));
+parser::Vec3f element_wise_subtraction(parser::Vec3f a, parser::Vec3f b) {
+    parser::Vec3f result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
 
-    float su = (i + 0.5) * ((near_plane.y - near_plane.x) / image_width);
-    float sv = (j + 0.5) * ((near_plane.w - near_plane.z) / image_height);
-    parser::Vec3f s =  subt(add(q, mult(parallel, su)), mult(up, sv));
-    Ray my_ray;
-    my_ray.a = e;
-    my_ray.b = normalize(subt(s,e));
-    return my_ray;
-    
-    /*Ray tmp;
-
-    parser::Vec3f s_parallel, s_up, s;
-
-    tmp.a = position;
-
-    s_parallel = mult(parallel, near_plane.x + (i*pixel_width) + half_pixel_width);//left(x),right(y),bottom(z),top(w)
-    s_up = mult(up, near_plane.z + (j*pixel_height)+half_pixel_height);
-
-    s = add(s_parallel, s_up);
-
-    tmp.b = add(mult(gaze, near_distance), s);
-
-    return tmp;
-    */
+    return result;
 }
 
-void printVec(parser::Vec3f a) {
+void print_vector(parser::Vec3f a) {
     printf("(%f, %f, %f)", a.x, a.y, a.z);
+    printf("\n");
 }
 
 void initImage() {
@@ -198,6 +141,36 @@ void initImage() {
         }
     }
 }
+
+Color clamp(Color color) {
+    Color result;
+    
+    if (color.R < 0) {
+        result.R = 0;
+    } else if (color.R > 250) {
+        result.R = 250;
+    } else {
+        result.R = color.R;
+    }
+
+    if (color.G < 0) {
+        result.G = 0;
+    } else if (color.G > 250) {
+        result.G = 250;
+    } else {
+        result.G = color.G;
+    }
+
+    if (color.B < 0) {
+        result.B = 0;
+    } else if (color.B > 250) {
+        result.B = 250;
+    } else {
+        result.B = color.B;
+    }
+
+    return result;
+} 
 
 void readXml(char *fname) {
     parser::Scene scene;
@@ -221,10 +194,39 @@ void readXml(char *fname) {
     numMeshes = meshes.size();
 }
 
+void setPixelInImage(int row, int col, Color color) {
+    image[row*image_width*3+col*3] = color.R;
+    image[row*image_width*3+col*3+1] = color.G;
+    image[row*image_width*3+col*3+2] = color.B;
+}
+
+void setCameraData(parser::Camera cam) {
+    cam_position = cam.position;
+    gaze = cam.gaze;
+    up = cam.up;
+    near_plane = cam.near_plane; //left(x),right(y),bottom(z),top(w)
+    near_distance = cam.near_distance;
+    image_width = cam.image_width;
+    image_height = cam.image_height;
+    image_name = cam.image_name;
+
+    parallel = cross_product(gaze, up);
+    parallel = normalize(parallel);
+
+    up = cross_product(parallel, gaze);
+    up = normalize(up);
+
+    gaze = normalize(gaze);
+    
+    pixel_width = (near_plane.x - near_plane.y)/(double) image_width;
+    half_pixel_width = pixel_width*0.5;
+
+    pixel_height = (near_plane.w - near_plane.z)/(double) image_height;
+    half_pixel_height = pixel_height*0.5;
+}
+
 int main(int argc, char* argv[])
 {
-    // Sample usage for reading an XML scene file
-    
     if (argc < 2) {
         printf("Usage: ./raytracer <xml file>");
         return 1;
@@ -233,132 +235,22 @@ int main(int argc, char* argv[])
     readXml(argv[1]);
 
     for (int c = 0; c < cameras.size(); c++) {
-        
-        position = cameras[c].position;
-        gaze = cameras[c].gaze;
-        up = cameras[c].up;
-        near_plane = cameras[c].near_plane; //left(x),right(y),bottom(z),top(w)
-        near_distance = cameras[c].near_distance;
-        image_width = cameras[c].image_width;
-        image_height = cameras[c].image_height;
-        image_name = cameras[c].image_name;
-
-        parallel = cross(gaze, up);
-        parallel = normalize(parallel);
-
-        up = cross(parallel, gaze);
-        up = normalize(up);
-
-        gaze = normalize(gaze);
-        
-        pixel_width = (near_plane.x - near_plane.y)/(double) image_width;
-        half_pixel_width = pixel_width*0.5;
-
-        pixel_height = (near_plane.w - near_plane.z)/(double) image_height;
-        half_pixel_height = pixel_height*0.5;
-
+        setCameraData(cameras[c]);
         image_name_ptr = &image_name[0];
-        
 
-        image = new unsigned char [image_width * image_height * 3];
+        image = new unsigned char [image_width*image_height*3];
 
-        //init image
         initImage();
-        int i,j,k;
-        for (i = 0; i < image_width; i++) {
-            for (j = 0; j < image_height; j++) {
-                Ray r;
-                
-                double tmin = std::numeric_limits<double>::max();
-                int closestObj = -1;
 
-                //generate primary ray
-                r = generateRay(i,j);
-                
-                for (k = 0; k < numSpheres; k++) {
-                    double t;
-
-                    t = intersectSphere(r, spheres[k]);
-                    //asıl tmini geçtik, sonra bakarız
-                    if (t >= 1) {
-                        if (t < tmin) {
-                            tmin = t;
-                            closestObj = k;
-                        }
-                    }
-                }
-                printf("closest: %d", closestObj);
-//                if (closestObj != -1) {
-
-//                }
-                //find first/closest intersecting object
-                //apply shading
-                //find color at pixel given cam, ray and recursion depth
-                //image->setPixelValueFor i & j
-                
-
+        for (int row = 0; row < image_height; row++) {
+            for (int col=0; col < image_width; col++) {
+                ;
             }
         }
-
-        /*int i = 0;
-        for (int y = 0; y < image_height; ++y)
-        {
-            for (int x = 0; x < image_width; ++x)
-            {
-                Ray ray = generateRay(x,y);
-                printf("ray.a: ");
-                printVec(ray.a);
-                printf("ray.b: ");
-                printVec(ray.b);
-                printf("\n");
-
-               
-                image[i++] = background_color.x;
-                image[i++] = background_color.y;
-                image[i++] = background_color.z;
-            }
-        }*/
-
+       
         write_ppm(image_name_ptr, image, image_width, image_height);
     }
 
-    // The code below creates a test pattern and writes
-    // it to a PPM file to demonstrate the usage of the
-    // ppm_write function.
-    //
-    // Normally, you would be running your ray tracing
-    // code here to produce the desired image.
-
-    /*const RGB BAR_COLOR[8] =
-    {
-        { 255, 255, 255 },  // 100% White
-        { 255, 255,   0 },  // Yellow
-        {   0, 255, 255 },  // Cyan
-        {   0, 255,   0 },  // Green
-        { 255,   0, 255 },  // Magenta
-        { 255,   0,   0 },  // Red
-        {   0,   0, 255 },  // Blue
-        {   0,   0,   0 },  // Black
-    };
-
-    //int width = 640, height = 480;
-    //int columnWidth = width / 8;
-
-    unsigned char* image = new unsigned char [width * height * 3];
-
-    int i = 0;
-    for (int y = 0; y < height; ++y)
-    {
-        for (int x = 0; x < width; ++x)
-        {
-            int colIdx = x / columnWidth;
-            image[i++] = BAR_COLOR[colIdx][0];
-            image[i++] = BAR_COLOR[colIdx][1];
-            image[i++] = BAR_COLOR[colIdx][2];
-        }
-    }
-
-    write_ppm("test.ppm", image, width, height);
-    */
+    
     return 0;
 }

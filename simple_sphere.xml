@@ -1,0 +1,48 @@
+<Scene>
+    <BackgroundColor>0 0 0</BackgroundColor>
+
+    <ShadowRayEpsilon>1e-3</ShadowRayEpsilon>
+
+    <MaxRecursionDepth>6</MaxRecursionDepth>
+
+    <Cameras>
+        <Camera id="1">
+            <Position>0 0 0</Position>
+            <Gaze>0 0 -1</Gaze>
+            <Up>0 1 0</Up>
+            <NearPlane>-0.5 0.5 -0.5 0.5</NearPlane>
+            <NearDistance>1</NearDistance>
+            <ImageResolution>1024 1024</ImageResolution>
+            <ImageName>simple_sphere.ppm</ImageName>
+        </Camera>
+    </Cameras>
+
+    <Lights>
+        <AmbientLight>12.5 12.5 12.5</AmbientLight>
+    </Lights>
+
+    <Materials>
+        <Material id="1">
+            <AmbientReflectance>1 1 1</AmbientReflectance>
+            <DiffuseReflectance>1 0 0</DiffuseReflectance>
+            <SpecularReflectance>1 1 1</SpecularReflectance>
+            <MirrorReflectance>1 1 1</MirrorReflectance>
+            <PhongExponent>50</PhongExponent>
+        </Material>
+    </Materials>
+
+    <VertexData>
+        0 0 0
+        1 -1 -5
+        0 0 0
+        0 0 0
+    </VertexData>
+
+    <Objects>
+        <Sphere id="1">
+            <Material>1</Material>
+            <Center>1</Center>
+            <Radius>1</Radius>
+        </Sphere>
+    </Objects>
+</Scene>
