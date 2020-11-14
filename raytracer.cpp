@@ -306,11 +306,11 @@ Object intersect_ray_with_object (Ray ray ) {
         parser::Material sphere_m ;
         parser::Vec3f sphere_c ;
         parser::Vec3f ray_origin ;
-        parser::Vec3f ray_direction ;
+        parser::Vec3f ray_direction = ray.direction;
         float sphere_r ;
-        sphere_m = materials[sphere_m_id] ;
+        sphere_m = materials[sphere_m_id-1] ;
         
-        sphere_c = vertex_data[sphere_c_id] ;
+        sphere_c = vertex_data[sphere_c_id-1] ;
         sphere_r = sphere.radius ;
 
         float a ;
