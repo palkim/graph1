@@ -137,6 +137,12 @@ void print_vector(parser::Vec3f a ) {
     printf("\n") ;
 }
 
+void setPixelInImage(int row , int col , Color color ) {
+    image[row * image_width * 3 + col*3 ] = color.R ;
+    image[row * image_width * 3 + col*3 + 1 ] = color.G ;
+    image[row * image_width * 3 + col*3 + 2 ] = color.B ;
+}
+
 void initImage() {
     Color background = {background_color.x , background_color.y , background_color.z };
     for (int row = 0; row < image_height; row++ )
@@ -204,11 +210,7 @@ void readXml(char *fname ) {
     numMeshes = meshes.size() ;
 }
 
-void setPixelInImage(int row , int col , Color color ) {
-    image[row * image_width * 3 + col*3 ] = color.R ;
-    image[row * image_width * 3 + col*3 + 1 ] = color.G ;
-    image[row * image_width * 3 + col*3 + 2 ] = color.B ;
-}
+
 
 void setCameraData(parser::Camera cam ) {
     e = cam.position ;
@@ -301,9 +303,10 @@ int main(int argc , char* argv[] )
         for (int row = 0 ; row < image_height ; row++ ) {
             for (int col=0 ; col < image_width ; col++ ) {
                 Ray ray_to_pixel;
-                ray_to_pixel = get_ray_to_pixel(int row, int col ) ;
-                
+                ray_to_pixel = get_ray_to_pixel(row, col ) ;
+               
             }
+            
         }
        
         write_ppm(image_name_ptr , image , image_width , image_height ) ;
