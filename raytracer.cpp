@@ -9,8 +9,8 @@ typedef unsigned char RGB[3];
 
 struct Ray
 {
-    parser::Vec3f a ;
-    parser::Vec3f b ;
+    parser::Vec3f origin ;
+    parser::Vec3f direction ;
 };
 
 struct Color
@@ -210,7 +210,17 @@ void readXml(char *fname ) {
     numMeshes = meshes.size() ;
 }
 
+parser::Vec3f get_ray_point_at_t(Ray ray , float t ) {
+    parser::Vec3f result;
+    
+    parser::Vec3f d_mult_t;
+    d_mult_t = scalar_multiplication(ray.direction , t ) ;
 
+    result = element_wise_addition(ray.origin , d_mult_t ) ;
+
+    return result;
+
+}
 
 void setCameraData(parser::Camera cam ) {
     e = cam.position ;
@@ -304,9 +314,8 @@ int main(int argc , char* argv[] )
             for (int col=0 ; col < image_width ; col++ ) {
                 Ray ray_to_pixel;
                 ray_to_pixel = get_ray_to_pixel(row, col ) ;
-               
+                
             }
-            
         }
        
         write_ppm(image_name_ptr , image , image_width , image_height ) ;
