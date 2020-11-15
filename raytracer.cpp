@@ -54,6 +54,7 @@ std::vector<parser::Sphere> spheres ;
 int numSpheres ;
 int numTriangles ;
 int numMeshes ;
+int numPointLights ;
 
 //camera data
 parser::Vec3f e ;
@@ -215,6 +216,7 @@ void readXml(char *fname ) {
     numSpheres = spheres.size() ;
     numTriangles = triangles.size() ;
     numMeshes = meshes.size() ;
+    numPointLights = point_lights.size() ;
 }
 
 parser::Vec3f get_ray_point_at_t(Ray ray , float t ) {
@@ -402,7 +404,7 @@ Object intersect_ray_with_object (Ray ray ) {
     float t ;
     for (int triangle_index = 0; triangle_index < numTriangles; triangle_index++) {
         face = triangles[triangle_index].indices ;
-        triangle_m = materials[triangles[triangle_index].material_id] ;
+        triangle_m = materials[triangles[triangle_index].material_id - 1] ;
         
         a = vertex_data[face.v0_id-1] ;
         b = vertex_data[face.v1_id-1] ;
@@ -450,7 +452,7 @@ Object intersect_ray_with_object (Ray ray ) {
         int numFaces = (mesh.faces).size() ;
         for (int face_index = 0; face_index < numFaces; face_index++) {
             face = mesh.faces[face_index] ;
-            triangle_m = materials[mesh.material_id] ;
+            triangle_m = materials[mesh.material_id - 1] ;
             
             a = vertex_data[face.v0_id-1] ;
             b = vertex_data[face.v1_id-1] ;
@@ -496,6 +498,41 @@ Object intersect_ray_with_object (Ray ray ) {
     return result ;
 }
 
+Ray get_ray_for_shadow(parser::Vec3f intersection_point, parser::PointLight light) {
+    Ray result ;
+    parser::Vec3f direction_with_epsilon ;
+    
+    result.direction = normalize(element_wise_subtraction(light.position, intersection_point)) ;
+    
+    direction_with_epsilon = scalar_multiplication(result.direction, shadow_ray_epsilon) ;
+    result.origin = element_wise_addition(intersection_point, direction_with_epsilon) ;
+    
+    return result ;
+}
+
+parser::Vec3f shading (parser::Vec3f point, parser::Vec3f normal, parser::Material material, parser::PointLight light, Ray ray) {
+    parser::Vec3f result ;
+    
+    parser::Vec3f to_light = element_wise_subtraction(light.position, point)  ;
+    to_light = normalize(to_light) ;
+    parser::Vec3f normal_vector = normalize(normal) ;
+    parser::Vec3f point_to_ray_origin = normalize(element_wise_subtraction(ray.origin, point)) ;
+    parser::Vec3f half_vector = normalize(element_wise_addition(point_to_ray_origin, to_light) ) ;
+    parser::Vec3f light_intensity;
+    float mult_with_intensity = 1 / (pow(length(to_light), 2) ) ;
+    light_intensity = scalar_multiplication(light.intensity, mult_with_intensity) ;
+    float cos_diffuse = std::max(dot_product(normal_vector, to_light), (float) 0) ;
+    float cos_specular = std::max(dot_product(normal_vector, half_vector), (float) 0) ;
+    parser::Vec3f diffuse = scalar_multiplication(element_wise_multiplication(material.diffuse, light_intensity), cos_diffuse) ;
+    float cos_pow_phong = pow(cos_specular, material.phong_exponent) ;
+    parser::Vec3f irr = element_wise_multiplication(material.specular, light_intensity) ;
+    parser::Vec3f specular = scalar_multiplication(irr, cos_pow_phong) ;
+    
+    result = element_wise_addition(diffuse, specular) ;
+
+    return result ;
+}
+
 Color get_color_of_pixel (Ray ray , int recursion_depth ) {
 
     Object intersection_object = intersect_ray_with_object(ray) ;
@@ -504,12 +541,34 @@ Color get_color_of_pixel (Ray ray , int recursion_depth ) {
         return background ;
     } 
     else {
-        Color orange = {255, 165, 0} ;
-        return orange ;
-        //Color pixel_color ;
-        //parser::Material intersection_obj_mat = intersection_object.material ;
-        //parser::Vec3f intersection_point = intersection_object.intersection_point ;
-
+        parser::Vec3f color_calc_temp = {0, 0, 0} ;
+        Color pixel_color ;
+        parser::Material intersection_obj_mat = intersection_object.material ;
+        parser::Vec3f intersection_point = intersection_object.intersection_point ;
+        parser::PointLight light ;
+        Ray shadow ;
+        float light_point_dist ;
+        Object shadow_intersection_object ;
+        //ambient shading
+        color_calc_temp = element_wise_addition(color_calc_temp, element_wise_multiplication(intersection_obj_mat.ambient, ambient_light)) ;
+        
+        print_vector(element_wise_multiplication(intersection_obj_mat.ambient, ambient_light)) ;
+        
+        //diffuse and specular shading
+        for (int light_index = 0; light_index < numPointLights ; light_index++ ) {
+            light = point_lights[light_index] ;
+            shadow = get_ray_for_shadow(intersection_point, light) ;
+            light_point_dist = length(element_wise_subtraction(light.position, intersection_point)) ;
+            shadow_intersection_object = intersect_ray_with_object(shadow) ;
+            if (shadow_intersection_object.isIntersects && shadow_intersection_object.intersects_at_t < light_point_dist) {
+                continue;
+            } else {
+                color_calc_temp = element_wise_addition(color_calc_temp, shading(intersection_point, intersection_object.normal_vector, intersection_obj_mat, light, ray)) ;
+            }
+        }
+        pixel_color = {round(color_calc_temp.x), round(color_calc_temp.y), round(color_calc_temp.z)} ;
+        pixel_color = clamp(pixel_color) ;
+        return pixel_color;
     }
 }
 
