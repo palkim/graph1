@@ -293,6 +293,14 @@ Ray get_ray_to_pixel (int row, int col ) {
     return result;
 }
 
+float determinant(parser::Vec3f a, parser::Vec3f b, parser::Vec3f c){
+    return a.x*(b.y*c.z - b.z*c.y) - b.x*(a.y*c.z - c.y*a.z) + c.x*(a.y*b.z - b.y*a.z);
+}
+
+
+
+
+
 Object intersect_ray_with_object (Ray ray ) {
 
     Object result ;
@@ -304,9 +312,9 @@ Object intersect_ray_with_object (Ray ray ) {
         int sphere_m_id = sphere.material_id ;
         int sphere_c_id = sphere.center_vertex_id ;
         parser::Material sphere_m ;
-        parser::Vec3f sphere_c ;
-        parser::Vec3f ray_origin ;
-        parser::Vec3f ray_direction = ray.direction;
+        parser::Vec3f sphere_c ; 
+        parser::Vec3f ray_origin = ray.origin;
+        parser::Vec3f ray_direction = ray.direction ;
         float sphere_r ;
         sphere_m = materials[sphere_m_id-1] ;
         
@@ -329,7 +337,7 @@ Object intersect_ray_with_object (Ray ray ) {
         } else {
             float t1 ;
             float t2 ;
-            float eq1 = dot_product(ray_direction , ray_direction );
+            float eq1 = dot_product(ray_direction , ray_direction ) ;
             float eq2 = dot_product(scalar_multiplication(ray_direction, -1) , o_subt_c ) ;
             float determinant_sqrt = sqrt(determinant ) ;    
 
@@ -362,6 +370,129 @@ Object intersect_ray_with_object (Ray ray ) {
 
         }
     }
+    parser::Face face;
+    parser::Material triangle_m;
+    
+    parser::Vec3f a ;
+    parser::Vec3f b  ;
+    parser::Vec3f c ;
+
+    parser::Vec3f c_subt_b  ;
+    parser::Vec3f a_subt_b  ;
+
+    parser::Vec3f normal ;
+
+    parser::Vec3f beta_0;
+    parser::Vec3f beta_1;
+    parser::Vec3f beta_2;
+
+    parser::Vec3f gama_0 ;
+    parser::Vec3f gama_1 ;
+    parser::Vec3f gama_2 ;
+
+    parser::Vec3f t_0 ; //a-b
+    parser::Vec3f t_1; //a-c
+    parser::Vec3f t_2 ; //a-o
+
+
+    float detA ;
+
+    float beta ;
+    float gama ;
+    float t ;
+    for (int triangle_index = 0; triangle_index < numTriangles; triangle_index++) {
+        face = triangles[triangle_index].indices ;
+        triangle_m = materials[triangles[triangle_index].material_id] ;
+        
+        a = vertex_data[face.v0_id-1] ;
+        b = vertex_data[face.v1_id-1] ;
+        c = vertex_data[face.v2_id-1] ;
+
+        c_subt_b = element_wise_subtraction(c , b) ;
+        a_subt_b = element_wise_subtraction(a , b) ;
+
+        normal = normalize(cross_product(c_subt_b, a_subt_b) ) ;
+
+        beta_0 = element_wise_subtraction(a, ray.origin);
+        beta_1 = element_wise_subtraction(a, c);
+        beta_2 = ray.direction;
+
+        gama_0 = element_wise_subtraction(a, b);
+        gama_1 = element_wise_subtraction(a, ray.origin);
+        gama_2 = ray.direction;
+
+        t_0 = gama_0; //a-b
+        t_1 = beta_1; //a-c
+        t_2 = gama_1; //a-o
+
+
+        detA = determinant(element_wise_subtraction(a, b), element_wise_subtraction(a, c), ray.direction);
+
+        beta = determinant(beta_0, beta_1, beta_2) / detA;
+        gama = determinant(gama_0, gama_1, gama_2) / detA;
+        t = determinant(t_0, t_1, t_2) / detA;
+
+        if(beta >= 0 && gama >= 0 && beta + gama <= 1){
+            if (t < intersects_t_max) {
+                intersects_t_max = t ;
+                result.intersects_at_t = t ;
+                result.isIntersects = true ;
+                result.intersection_point = get_ray_point_at_t(ray, t) ;
+                result.material = triangle_m ;
+                result.normal_vector = normal ; 
+            }
+        }
+        
+    }
+    
+    for (int mesh_index = 0 ; mesh_index < numMeshes ; mesh_index++) {
+        parser::Mesh mesh = meshes[mesh_index] ;
+        int numFaces = (mesh.faces).size() ;
+        for (int face_index = 0; face_index < numFaces; face_index++) {
+            face = mesh.faces[face_index] ;
+            triangle_m = materials[mesh.material_id] ;
+            
+            a = vertex_data[face.v0_id-1] ;
+            b = vertex_data[face.v1_id-1] ;
+            c = vertex_data[face.v2_id-1] ;
+
+            c_subt_b = element_wise_subtraction(c , b) ;
+            a_subt_b = element_wise_subtraction(a , b) ;
+
+            normal = normalize(cross_product(c_subt_b, a_subt_b) ) ;
+
+            beta_0 = element_wise_subtraction(a, ray.origin);
+            beta_1 = element_wise_subtraction(a, c);
+            beta_2 = ray.direction;
+
+            gama_0 = element_wise_subtraction(a, b);
+            gama_1 = element_wise_subtraction(a, ray.origin);
+            gama_2 = ray.direction;
+
+            t_0 = gama_0; //a-b
+            t_1 = beta_1; //a-c
+            t_2 = gama_1; //a-o
+
+
+            detA = determinant(element_wise_subtraction(a, b), element_wise_subtraction(a, c), ray.direction);
+
+            beta = determinant(beta_0, beta_1, beta_2) / detA;
+            gama = determinant(gama_0, gama_1, gama_2) / detA;
+            t = determinant(t_0, t_1, t_2) / detA;
+
+            if(beta >= 0 && gama >= 0 && beta + gama <= 1){
+                if (t < intersects_t_max) {
+                    intersects_t_max = t ;
+                    result.intersects_at_t = t ;
+                    result.isIntersects = true ;
+                    result.intersection_point = get_ray_point_at_t(ray, t) ;
+                    result.material = triangle_m ;
+                    result.normal_vector = normal ; 
+                }
+            }
+        }
+    }
+
     return result ;
 }
 
@@ -373,8 +504,12 @@ Color get_color_of_pixel (Ray ray , int recursion_depth ) {
         return background ;
     } 
     else {
-        Color orange = {255, 255, 255} ;
+        Color orange = {255, 165, 0} ;
         return orange ;
+        //Color pixel_color ;
+        //parser::Material intersection_obj_mat = intersection_object.material ;
+        //parser::Vec3f intersection_point = intersection_object.intersection_point ;
+
     }
 }
 
