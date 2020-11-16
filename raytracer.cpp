@@ -3,9 +3,10 @@
 #include <limits> // I add this
 #include "parser.h"
 #include "ppm.h"
+#include <ctime>
 
 typedef unsigned char RGB[3];
-
+float distance_check;
 
 struct Ray
 {
@@ -300,9 +301,6 @@ float determinant(parser::Vec3f a, parser::Vec3f b, parser::Vec3f c){
 }
 
 
-
-
-
 Object intersect_ray_with_object (Ray ray ) {
 
     Object result ;
@@ -335,8 +333,10 @@ Object intersect_ray_with_object (Ray ray ) {
         determinant = (float) pow(b , 2 ) - ((float) 4 * a * c ) ;
 
         if (determinant < (float) 0) {
+            //printf("determinant is zero, no intersection\n");
             continue ;
         } else {
+            
             float t1 ;
             float t2 ;
             float eq1 = dot_product(ray_direction , ray_direction ) ;
@@ -346,9 +346,11 @@ Object intersect_ray_with_object (Ray ray ) {
             t1 = (eq2 + determinant_sqrt ) / eq1 ;
             t2 = (eq2 - determinant_sqrt ) / eq1 ;
             //NOTE: should i put an intersection epsilon value ?
+            
             if (t2 < (float) 0 && t1 < (float) 0) {
                 continue ;
             } else {
+                //printf("determinant is bigger than or equal to zero and there is intersection\n");
                 result.isIntersects = true ;
                 if (t1 < (float) 0 && t2 < intersects_t_max) {
                     intersects_t_max = t2 ;
@@ -364,7 +366,6 @@ Object intersect_ray_with_object (Ray ray ) {
                     result.intersects_at_t = t2 ;
                 }
             }
-
             result.material = sphere_m ;
             result.intersection_point = get_ray_point_at_t(ray, result.intersects_at_t) ;
             parser::Vec3f normal = element_wise_subtraction(result.intersection_point , sphere_c ) ;
@@ -434,8 +435,15 @@ Object intersect_ray_with_object (Ray ray ) {
         gama = determinant(gama_0, gama_1, gama_2) / detA;
         t = determinant(t_0, t_1, t_2) / detA;
 
+        if(t < distance_check) {
+            //printf("t < distance_check, no intersection") ;
+            continue;
+        }
+
         if(beta >= 0 && gama >= 0 && beta + gama <= 1){
+
             if (t < intersects_t_max) {
+                //printf("intersection occured") ;
                 intersects_t_max = t ;
                 result.intersects_at_t = t ;
                 result.isIntersects = true ;
@@ -482,6 +490,10 @@ Object intersect_ray_with_object (Ray ray ) {
             gama = determinant(gama_0, gama_1, gama_2) / detA;
             t = determinant(t_0, t_1, t_2) / detA;
 
+            if(t < distance_check) {
+                continue;
+            }
+
             if(beta >= 0 && gama >= 0 && beta + gama <= 1){
                 if (t < intersects_t_max) {
                     intersects_t_max = t ;
@@ -500,49 +512,87 @@ Object intersect_ray_with_object (Ray ray ) {
 
 Ray get_ray_for_shadow(parser::Vec3f intersection_point, parser::PointLight light) {
     Ray result ;
-    parser::Vec3f direction_with_epsilon ;
+
+    parser::Vec3f wi = normalize(element_wise_subtraction(light.position, intersection_point)) ;
+    parser::Vec3f wi_mult_eps = scalar_multiplication(wi, shadow_ray_epsilon) ;
+
+    result.direction = wi ;    
     
-    result.direction = normalize(element_wise_subtraction(light.position, intersection_point)) ;
-    
-    direction_with_epsilon = scalar_multiplication(result.direction, shadow_ray_epsilon) ;
-    result.origin = element_wise_addition(intersection_point, direction_with_epsilon) ;
-    
+    result.origin = element_wise_addition(intersection_point, wi_mult_eps) ;
+
     return result ;
+
 }
 
-parser::Vec3f shading (parser::Vec3f point, parser::Vec3f normal, parser::Material material, parser::PointLight light, Ray ray) {
+parser::Vec3f spec_shading (parser::Vec3f point, parser::Vec3f normal, parser::Material material, parser::PointLight light, Ray ray) {
     parser::Vec3f result ;
-    
-    parser::Vec3f to_light = element_wise_subtraction(light.position, point)  ;
-    to_light = normalize(to_light) ;
-    parser::Vec3f normal_vector = normalize(normal) ;
-    parser::Vec3f point_to_ray_origin = normalize(element_wise_subtraction(ray.origin, point)) ;
-    parser::Vec3f half_vector = normalize(element_wise_addition(point_to_ray_origin, to_light) ) ;
-    parser::Vec3f light_intensity;
-    float mult_with_intensity = 1 / (pow(length(to_light), 2) ) ;
-    light_intensity = scalar_multiplication(light.intensity, mult_with_intensity) ;
-    float cos_diffuse = std::max(dot_product(normal_vector, to_light), (float) 0) ;
-    float cos_specular = std::max(dot_product(normal_vector, half_vector), (float) 0) ;
-    parser::Vec3f diffuse = scalar_multiplication(element_wise_multiplication(material.diffuse, light_intensity), cos_diffuse) ;
-    float cos_pow_phong = pow(cos_specular, material.phong_exponent) ;
-    parser::Vec3f irr = element_wise_multiplication(material.specular, light_intensity) ;
-    parser::Vec3f specular = scalar_multiplication(irr, cos_pow_phong) ;
-    
-    result = element_wise_addition(diffuse, specular) ;
 
-    return result ;
+    parser::Vec3f wi = element_wise_subtraction(light.position, point) ;
+    wi = normalize(wi) ;
+
+    parser::Vec3f normal_vector = normalize(normal) ;
+
+    parser::Vec3f wo = element_wise_subtraction(ray.origin, point) ;
+    wo = normalize(wo) ;
+
+    parser::Vec3f wi_plus_wo = element_wise_addition(wi, wo) ;
+
+    float one_over_wi_plus_wo_len = (((float) 1) / length(wi_plus_wo)) ;
+
+    parser::Vec3f h = scalar_multiplication(wi_plus_wo, one_over_wi_plus_wo_len) ;
+
+    float cos_theta = std::max((float) 0, dot_product(normal_vector, h)) ;
+
+    float one_over_r_square = ((float) 1 ) / pow(length(element_wise_subtraction(light.position, point)),2) ;
+
+    parser::Vec3f irradiance = scalar_multiplication(light.intensity, one_over_r_square) ;
+    parser::Vec3f ks = material.specular ;
+    result = element_wise_multiplication(ks, irradiance) ;
+    result = scalar_multiplication(result, cos_theta) ;
+
+    return result;
+
+}
+
+parser::Vec3f diff_shading (parser::Vec3f point, parser::Vec3f normal, parser::Material material, parser::PointLight light, Ray ray) {
+    parser::Vec3f result ;
+
+    parser::Vec3f wi = element_wise_subtraction(light.position, point) ;
+    wi = normalize(wi) ;
+
+    parser::Vec3f normal_vector = normalize(normal) ;
+
+    parser::Vec3f wo = element_wise_subtraction(ray.origin, point) ;
+    wo = normalize(wo) ;
+
+    float cos_theta = std::max((float) 0, dot_product(wi, normal_vector)) ;
+
+    float one_over_r_square = ((float) 1 ) / pow(length(element_wise_subtraction(light.position, point)),2) ;
+
+    parser::Vec3f irradiance = scalar_multiplication(light.intensity, one_over_r_square) ;
+    parser::Vec3f kd = material.diffuse ;
+    result = element_wise_multiplication(kd, irradiance) ;
+    result = scalar_multiplication(result, cos_theta) ;
+
+    return result;
+
 }
 
 Color get_color_of_pixel (Ray ray , int recursion_depth ) {
 
     Object intersection_object = intersect_ray_with_object(ray) ;
     Color background = {background_color.x, background_color.y, background_color.z} ;
+    if (recursion_depth == 0) {
+        distance_check = camera_imagePlane_distance;
+    } else {
+        distance_check = (float) 0;
+    }
     if (!intersection_object.isIntersects) {
         return background ;
     } 
     else {
-        parser::Vec3f color_calc_temp = {0, 0, 0} ;
         Color pixel_color ;
+        parser::Vec3f color_calc_temp = {0, 0, 0} ;
         parser::Material intersection_obj_mat = intersection_object.material ;
         parser::Vec3f intersection_point = intersection_object.intersection_point ;
         parser::PointLight light ;
@@ -552,18 +602,25 @@ Color get_color_of_pixel (Ray ray , int recursion_depth ) {
         //ambient shading
         color_calc_temp = element_wise_addition(color_calc_temp, element_wise_multiplication(intersection_obj_mat.ambient, ambient_light)) ;
         
-        print_vector(element_wise_multiplication(intersection_obj_mat.ambient, ambient_light)) ;
-        
         //diffuse and specular shading
         for (int light_index = 0; light_index < numPointLights ; light_index++ ) {
             light = point_lights[light_index] ;
             shadow = get_ray_for_shadow(intersection_point, light) ;
             light_point_dist = length(element_wise_subtraction(light.position, intersection_point)) ;
+            distance_check = (float) 0 ;
             shadow_intersection_object = intersect_ray_with_object(shadow) ;
-            if (shadow_intersection_object.isIntersects && shadow_intersection_object.intersects_at_t < light_point_dist) {
+            //printf("light_point_dist: %f\n", light_point_dist);
+            //printf("shadow_int_at_t: %f\n", shadow_intersection_object.intersects_at_t);
+            //printf("isIntersects: %d", shadow_intersection_object.isIntersects) ;
+            //printf("\n") ;
+            
+            if (shadow_intersection_object.isIntersects && light_point_dist > shadow_intersection_object.intersects_at_t ) {
+                //printf("dewam");
                 continue;
             } else {
-                color_calc_temp = element_wise_addition(color_calc_temp, shading(intersection_point, intersection_object.normal_vector, intersection_obj_mat, light, ray)) ;
+                color_calc_temp = element_wise_addition(color_calc_temp, diff_shading(intersection_point, intersection_object.normal_vector, intersection_obj_mat, light, ray)) ;
+                color_calc_temp = element_wise_addition(color_calc_temp, spec_shading(intersection_point, intersection_object.normal_vector, intersection_obj_mat, light, ray)) ;
+                //print_vector(shading(intersection_point, intersection_object.normal_vector, intersection_obj_mat, light, ray));            
             }
         }
         pixel_color = {round(color_calc_temp.x), round(color_calc_temp.y), round(color_calc_temp.z)} ;
@@ -574,6 +631,7 @@ Color get_color_of_pixel (Ray ray , int recursion_depth ) {
 
 int main(int argc , char* argv[] )
 {
+    clock_t begin = clock() ;
     if (argc < 2 ) {
         printf("Usage: ./raytracer <xml file>" );
         return 1 ;
@@ -605,6 +663,9 @@ int main(int argc , char* argv[] )
        
         write_ppm(image_name_ptr , image , image_width , image_height ) ;
     }
+    clock_t end = clock() ;
+    double elapsed_secs = double(end-begin) / CLOCKS_PER_SEC ;
+    printf("elapsed: %f", elapsed_secs);
 
     return 0 ;
 
