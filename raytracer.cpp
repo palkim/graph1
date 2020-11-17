@@ -301,10 +301,11 @@ float determinant(parser::Vec3f a, parser::Vec3f b, parser::Vec3f c){
 }
 
 
-Object intersect_ray_with_object (Ray ray ) {
+Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
 
     Object result ;
     result.isIntersects = false ;
+    
     float intersects_t_max = std::numeric_limits<float>::max() ;
 
     for (int sphere_index = 0 ; sphere_index < numSpheres ; sphere_index++ ) {
@@ -397,7 +398,6 @@ Object intersect_ray_with_object (Ray ray ) {
     parser::Vec3f t_1; //a-c
     parser::Vec3f t_2 ; //a-o
 
-
     float detA ;
 
     float beta ;
@@ -434,13 +434,13 @@ Object intersect_ray_with_object (Ray ray ) {
         beta = determinant(beta_0, beta_1, beta_2) / detA;
         gama = determinant(gama_0, gama_1, gama_2) / detA;
         t = determinant(t_0, t_1, t_2) / detA;
-
+        
         if(t < distance_check) {
             //printf("t < distance_check, no intersection") ;
             continue;
         }
 
-        if(beta >= 0 && gama >= 0 && beta + gama <= 1){
+        if((beta > (float) 0 || abs(beta) - (float)0 < 0.0001) && (gama > (float) 0 || abs(gama) - (float)0 < 0.0001) && ( ( beta + gama < (float) 1 ) || ( (beta + gama) - (float) 1 < 0.0001 ) ) ){
 
             if (t < intersects_t_max) {
                 //printf("intersection occured") ;
@@ -488,13 +488,24 @@ Object intersect_ray_with_object (Ray ray ) {
 
             beta = determinant(beta_0, beta_1, beta_2) / detA;
             gama = determinant(gama_0, gama_1, gama_2) / detA;
-            t = determinant(t_0, t_1, t_2) / detA;
-
+            t = determinant(t_0, t_1, t_2) / detA;    
+            
             if(t < distance_check) {
                 continue;
             }
-
-            if(beta >= 0 && gama >= 0 && beta + gama <= 1){
+            if (row == 601 && col == 199 && !isShadow) {
+                printf("beta: %f\n", beta) ;
+                printf("is beta bigger than zero: %d", beta > (float) 0) ;
+                printf("is beta equal to zero: %d", abs(beta) - (float) 0) < 0.0001;
+                printf("gama: %f\n", gama) ;
+                printf("is gama bigger than zero: %d", gama > (float) 0) ;
+                printf("if gama equal to zero: %d", abs(gama) - (float) 0 < 0.0001) ;
+                printf("beta+gama: %f\n", beta+gama);
+            }
+            
+            
+            if((beta > (float) 0 || abs(beta) - (float)0 < 0.0001) && (gama > (float) 0 || abs(gama) - (float)0 < 0.0001) && ( ( beta + gama < (float) 1 ) || ( (beta + gama) - (float) 1 < 0.0001 ) ) ){
+                
                 if (t < intersects_t_max) {
                     intersects_t_max = t ;
                     result.intersects_at_t = t ;
@@ -505,6 +516,9 @@ Object intersect_ray_with_object (Ray ray ) {
                 }
             }
         }
+    }
+    if (!result.isIntersects && !isShadow) {
+        printf("row: %d, col: %d\n", row, col) ;
     }
 
     return result ;
@@ -578,9 +592,9 @@ parser::Vec3f diff_shading (parser::Vec3f point, parser::Vec3f normal, parser::M
 
 }
 
-Color get_color_of_pixel (Ray ray , int recursion_depth ) {
+Color get_color_of_pixel (Ray ray , int recursion_depth , int row, int col) {
 
-    Object intersection_object = intersect_ray_with_object(ray) ;
+    Object intersection_object = intersect_ray_with_object(ray, row, col, false) ;
     Color background = {background_color.x, background_color.y, background_color.z} ;
     if (recursion_depth == 0) {
         distance_check = camera_imagePlane_distance;
@@ -608,7 +622,7 @@ Color get_color_of_pixel (Ray ray , int recursion_depth ) {
             shadow = get_ray_for_shadow(intersection_point, light) ;
             light_point_dist = length(element_wise_subtraction(light.position, intersection_point)) ;
             distance_check = (float) 0 ;
-            shadow_intersection_object = intersect_ray_with_object(shadow) ;
+            shadow_intersection_object = intersect_ray_with_object(shadow, row, col, true) ;
             //printf("light_point_dist: %f\n", light_point_dist);
             //printf("shadow_int_at_t: %f\n", shadow_intersection_object.intersects_at_t);
             //printf("isIntersects: %d", shadow_intersection_object.isIntersects) ;
@@ -640,6 +654,9 @@ int main(int argc , char* argv[] )
     readXml(argv[1]) ;
 
     for (int c = 0 ; c < cameras.size() ; c++ ) {
+        if (c != 2) {
+            continue;
+        }
         setCameraData(cameras[c]) ;
         image_name_ptr = &image_name[0] ;
 
@@ -655,7 +672,7 @@ int main(int argc , char* argv[] )
 
                 ray_to_pixel = get_ray_to_pixel(row, col ) ;
                 //below here recursion depth is zero since this is not a mirror ray
-                pixel_color = get_color_of_pixel(ray_to_pixel, 0 ) ;
+                pixel_color = get_color_of_pixel(ray_to_pixel, 0 , row, col ) ;
 
                 setPixelInImage(row, col , pixel_color );
             }
