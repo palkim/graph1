@@ -6,7 +6,7 @@
 #include <ctime>
 
 typedef unsigned char RGB[3];
-float distance_check;
+double distance_check;
 
 struct Ray
 {
@@ -23,10 +23,10 @@ struct Color
 
 struct ImagePlane
 {
-    float left ;
-    float right ;
-    float bottom ;
-    float top ;
+    double left ;
+    double right ;
+    double bottom ;
+    double top ;
 };
 
 struct Object 
@@ -35,14 +35,14 @@ struct Object
     parser::Vec3f normal_vector ;
     parser::Vec3f intersection_point ;
     bool isIntersects ;
-    float intersects_at_t ;
+    double intersects_at_t ;
 };
 
 
 
 //general data
 parser::Vec3i background_color ;
-float shadow_ray_epsilon ;
+double shadow_ray_epsilon ;
 int max_recursion_depth ;
 std::vector<parser::Camera> cameras ;
 parser::Vec3f ambient_light ;
@@ -63,7 +63,7 @@ parser::Vec3f w ; //w is opposite of gaze in slights, here it is gaze
 parser::Vec3f v ;
 parser::Vec3f u ;
 ImagePlane image_plane ;
-float camera_imagePlane_distance ;
+double camera_imagePlane_distance ;
 int image_width ;
 int image_height ;
 std::string image_name ;
@@ -71,72 +71,72 @@ std::string image_name ;
 char* image_name_ptr ;
 unsigned char* image ;
 
-float length(parser::Vec3f a ) {
-    return sqrt((float) a.x * (float) a.x + (float) a.y * (float) a.y + (float) a.z * (float) a.z ) ;
+double length(parser::Vec3f a ) {
+    return sqrt((double) a.x * (double) a.x + (double) a.y * (double) a.y + (double) a.z * (double) a.z ) ;
 }
 
 parser::Vec3f normalize(parser::Vec3f a ) {
     parser::Vec3f result ;
-    float d ;
+    double d ;
 
-    d = (float) length(a) ;
-    result.x = (float) a.x/d ;
-    result.y = (float) a.y/d ;
-    result.z = (float) a.z/d ;
+    d = (double) length(a) ;
+    result.x = (double) a.x/d ;
+    result.y = (double) a.y/d ;
+    result.z = (double) a.z/d ;
 
     return result ;
 }
 
 parser::Vec3f cross_product (parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = (float) a.y * (float) b.z - (float) a.z * (float) b.y ;
-    result.y = (float) a.z * (float) b.x - (float) a.x * (float) b.z ;
-    result.z = (float) a.x * (float) b.y - (float) a.y * (float) b.x ;
+    result.x = (double) a.y * (double) b.z - (double) a.z * (double) b.y ;
+    result.y = (double) a.z * (double) b.x - (double) a.x * (double) b.z ;
+    result.z = (double) a.x * (double) b.y - (double) a.y * (double) b.x ;
 
     return result ;
 }
 
-float dot_product (parser::Vec3f a , parser::Vec3f b ) {
-    float product = (float) 0 ;
-    product += (float) a.x * (float) b.x ;
-    product += (float) a.y * (float) b.y ;
-    product += (float) a.z * (float) b.z ;
+double dot_product (parser::Vec3f a , parser::Vec3f b ) {
+    double product = (double) 0 ;
+    product += (double) a.x * (double) b.x ;
+    product += (double) a.y * (double) b.y ;
+    product += (double) a.z * (double) b.z ;
 
     return product ;
 }
 
-parser::Vec3f scalar_multiplication(parser::Vec3f a , float b ) {
+parser::Vec3f scalar_multiplication(parser::Vec3f a , double b ) {
     parser::Vec3f result ;
-    result.x = a.x * (float) b ;
-    result.y = a.y * (float) b ;
-    result.z = a.z * (float) b ;
+    result.x = a.x * (double) b ;
+    result.y = a.y * (double) b ;
+    result.z = a.z * (double) b ;
 
     return result ;
 }
 
 parser::Vec3f element_wise_multiplication(parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = (float) a.x * (float) b.x ;
-    result.y = (float) a.y * (float) b.y ;
-    result.z = (float) a.z * (float) b.z ;
+    result.x = (double) a.x * (double) b.x ;
+    result.y = (double) a.y * (double) b.y ;
+    result.z = (double) a.z * (double) b.z ;
 
     return result ;
 }
 
 parser::Vec3f element_wise_addition(parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = (float) a.x + (float) b.x ;
-    result.y = (float) a.y + (float) b.y ;
-    result.z = (float) a.z + (float) b.z ;
+    result.x = (double) a.x + (double) b.x ;
+    result.y = (double) a.y + (double) b.y ;
+    result.z = (double) a.z + (double) b.z ;
 
     return result ;
 }
 
 parser::Vec3f element_wise_subtraction(parser::Vec3f a , parser::Vec3f b ) {
     parser::Vec3f result ;
-    result.x = (float) a.x - (float) b.x ;
-    result.y = (float) a.y - (float) b.y ;
-    result.z = (float) a.z - (float) b.z ;
+    result.x = (double) a.x - (double) b.x ;
+    result.y = (double) a.y - (double) b.y ;
+    result.z = (double) a.z - (double) b.z ;
 
     return result ;
 }
@@ -220,11 +220,11 @@ void readXml(char *fname ) {
     numPointLights = point_lights.size() ;
 }
 
-parser::Vec3f get_ray_point_at_t(Ray ray , float t ) {
+parser::Vec3f get_ray_point_at_t(Ray ray , double t ) {
     parser::Vec3f result;
     
     parser::Vec3f d_mult_t;
-    d_mult_t = scalar_multiplication(ray.direction , (float) t ) ;
+    d_mult_t = scalar_multiplication(ray.direction , (double) t ) ;
 
     result = element_wise_addition(ray.origin , d_mult_t ) ;
 
@@ -276,13 +276,13 @@ Ray get_ray_to_pixel (int row, int col ) {
     q = element_wise_addition(m, lu_plus_tv ) ;
 
     //construct s vector
-    float su ;
-    float sv ;
+    double su ;
+    double sv ;
     parser::Vec3f u_mult_su ;
     parser::Vec3f v_mult_sv ;
     parser::Vec3f suu_subt_svv ;
-    su = ((float) col + 0.5 ) * ((float) image_plane.right - (float) image_plane.left ) / (float) image_width ;
-    sv = ((float) row + 0.5 ) * ((float) image_plane.top - (float) image_plane.bottom ) / (float) image_height ;
+    su = ((double) col + 0.5 ) * ((double) image_plane.right - (double) image_plane.left ) / (double) image_width ;
+    sv = ((double) row + 0.5 ) * ((double) image_plane.top - (double) image_plane.bottom ) / (double) image_height ;
     u_mult_su = scalar_multiplication(u , su ) ;
     v_mult_sv = scalar_multiplication(v, sv ) ;
     suu_subt_svv = element_wise_subtraction(u_mult_su, v_mult_sv ) ;
@@ -296,7 +296,7 @@ Ray get_ray_to_pixel (int row, int col ) {
     return result;
 }
 
-float determinant(parser::Vec3f a, parser::Vec3f b, parser::Vec3f c){
+double determinant(parser::Vec3f a, parser::Vec3f b, parser::Vec3f c){
     return a.x*(b.y*c.z - b.z*c.y) - b.x*(a.y*c.z - c.y*a.z) + c.x*(a.y*b.z - b.y*a.z);
 }
 
@@ -306,7 +306,7 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
     Object result ;
     result.isIntersects = false ;
     
-    float intersects_t_max = std::numeric_limits<float>::max() ;
+    double intersects_t_max = std::numeric_limits<double>::max() ;
 
     for (int sphere_index = 0 ; sphere_index < numSpheres ; sphere_index++ ) {
         parser::Sphere sphere = spheres[sphere_index] ;
@@ -316,47 +316,47 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
         parser::Vec3f sphere_c ; 
         parser::Vec3f ray_origin = ray.origin;
         parser::Vec3f ray_direction = ray.direction ;
-        float sphere_r ;
+        double sphere_r ;
         sphere_m = materials[sphere_m_id-1] ;
         
         sphere_c = vertex_data[sphere_c_id-1] ;
         sphere_r = sphere.radius ;
 
-        float a ;
-        float b ;
-        float c ;
-        float determinant ;
+        double a ;
+        double b ;
+        double c ;
+        double determinant ;
         
         a = dot_product(ray_direction , ray_direction ) ;  
         parser::Vec3f o_subt_c = element_wise_subtraction(ray_origin, sphere_c ) ;
-        b = (float) 2 * dot_product(ray_direction , o_subt_c ) ;
-        c = dot_product(o_subt_c , o_subt_c ) - (float) pow(sphere_r,2) ;
-        determinant = (float) pow(b , 2 ) - ((float) 4 * a * c ) ;
+        b = (double) 2 * dot_product(ray_direction , o_subt_c ) ;
+        c = dot_product(o_subt_c , o_subt_c ) - (double) pow(sphere_r,2) ;
+        determinant = (double) pow(b , 2 ) - ((double) 4 * a * c ) ;
 
-        if (determinant < (float) 0) {
+        if (determinant < (double) 0) {
             //printf("determinant is zero, no intersection\n");
             continue ;
         } else {
             
-            float t1 ;
-            float t2 ;
-            float eq1 = dot_product(ray_direction , ray_direction ) ;
-            float eq2 = dot_product(scalar_multiplication(ray_direction, -1) , o_subt_c ) ;
-            float determinant_sqrt = sqrt(determinant ) ;    
+            double t1 ;
+            double t2 ;
+            double eq1 = dot_product(ray_direction , ray_direction ) ;
+            double eq2 = dot_product(scalar_multiplication(ray_direction, -1) , o_subt_c ) ;
+            double determinant_sqrt = sqrt(determinant ) ;    
 
             t1 = (eq2 + determinant_sqrt ) / eq1 ;
             t2 = (eq2 - determinant_sqrt ) / eq1 ;
             //NOTE: should i put an intersection epsilon value ?
             
-            if (t2 < (float) 0 && t1 < (float) 0) {
+            if (t2 < (double) 0 && t1 < (double) 0) {
                 continue ;
             } else {
                 //printf("determinant is bigger than or equal to zero and there is intersection\n");
                 result.isIntersects = true ;
-                if (t1 < (float) 0 && t2 < intersects_t_max) {
+                if (t1 < (double) 0 && t2 < intersects_t_max) {
                     intersects_t_max = t2 ;
                     result.intersects_at_t = t2 ;
-                } else if (t2 < (float) 0 && t1 < intersects_t_max) {
+                } else if (t2 < (double) 0 && t1 < intersects_t_max) {
                     intersects_t_max = t1 ;
                     result.intersects_at_t = t1 ;
                 } else if (t1 < t2 && t1 < intersects_t_max) {
@@ -398,11 +398,11 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
     parser::Vec3f t_1; //a-c
     parser::Vec3f t_2 ; //a-o
 
-    float detA ;
+    double detA ;
 
-    float beta ;
-    float gama ;
-    float t ;
+    double beta ;
+    double gama ;
+    double t ;
     for (int triangle_index = 0; triangle_index < numTriangles; triangle_index++) {
         face = triangles[triangle_index].indices ;
         triangle_m = materials[triangles[triangle_index].material_id - 1] ;
@@ -440,7 +440,8 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
             continue;
         }
 
-        if((beta > (float) 0 || abs(beta) - (float)0 < 0.0001) && (gama > (float) 0 || abs(gama) - (float)0 < 0.0001) && ( ( beta + gama < (float) 1 ) || ( (beta + gama) - (float) 1 < 0.0001 ) ) ){
+
+        if((beta > (double) 0 || abs(beta) - (double)0 < 0.0001) && (gama > (double) 0 || abs(gama) - (double)0 < 0.0001) && ( ( beta + gama < (double) 1 ) || ( (beta + gama) - (double) 1 < 0.0001 ) ) ){
 
             if (t < intersects_t_max) {
                 //printf("intersection occured") ;
@@ -488,32 +489,39 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
 
             beta = determinant(beta_0, beta_1, beta_2) / detA;
             gama = determinant(gama_0, gama_1, gama_2) / detA;
-            t = determinant(t_0, t_1, t_2) / detA;    
-            
-            if(t < distance_check) {
+            t = determinant(t_0, t_1, t_2) / detA;  
+
+            if (row == 610 && col == 750 ) {
+                printf("t: %f\n", t) ;
+                printf("distance_check: %f\n", distance_check) ;
+                printf("distance_check_val: %f\n", abs(t-distance_check));
+                printf("distance_check_is_true: %d\n", abs(t-distance_check) < 0.00001 || t < distance_check);
+            }
+
+            if(abs(t - distance_check) < 0.00001 || t < distance_check) {
                 continue;
             }
-            if (row == 607 && col == 202 && !isShadow) {
+            /*if (row == 610 && col == 750) {
                 printf("beta: %f\n", beta) ;
-                printf("is beta bigger than zero: %d\n", beta > (float) 0) ;
-                printf("is beta equal to zero: %d\n", (abs(abs(beta) - (float) 0)) < 0.0001) ;
+                printf("is beta bigger than zero: %d\n", beta > (double) 0) ;
+                printf("is beta equal to zero: %d\n", (abs(abs(beta) - (double) 0)) < 0.0001) ;
                 printf("gama: %f\n", gama) ;
-                printf("is gama bigger than zero: %d\n", gama > (float) 0) ;
-                printf("if gama equal to zero: %d\n", (abs(abs(gama) - (float) 0)) < 0.0001) ;
+                printf("is gama bigger than zero: %d\n", gama > (double) 0) ;
+                printf("if gama equal to zero: %d\n", (abs(abs(gama) - (double) 0)) < 0.0001) ;
                 printf("beta+gama: %f\n", beta+gama);
-                printf("is beta+gama less than 1: %d\n", beta + gama < (float) 1);
-                printf("is beta+gama is equal to 1: %d\n", (abs(beta+gama - (float) 1)) < 0.01) ;
-            }
+                printf("is beta+gama less than 1: %d\n", beta + gama < (double) 1);
+                printf("is beta+gama is equal to 1: %d\n", (abs(beta+gama - (double) 1)) < 0.01) ;
+            }*/
             
-            if (beta > (float) 0 || abs(beta - (float) 0) < 0.001 ) {
-                if (abs(beta - (float) 0) < 0.0001) {
-                    beta = (float) 0 ;
+            if (beta > (double) 0 || abs(beta - (double) 0) < 0.001 ) {
+                if (abs(beta - (double) 0) < 0.0001) {
+                    beta = (double) 0 ;
                 }
-                if (gama > (float) 0 || abs(gama - (float) 0 ) < 0.001) {
-                    if (abs(gama - (float) 0 ) < 0.0001) {
-                        gama = (float) 0 ;
+                if (gama > (double) 0 || abs(gama - (double) 0 ) < 0.001) {
+                    if (abs(gama - (double) 0 ) < 0.0001) {
+                        gama = (double) 0 ;
                     }
-                    if (beta + gama < (float) 1 || (beta + gama - (float) 1) < 0.001) {
+                    if (beta + gama < (double) 1 || (beta + gama - (double) 1) < 0.001) {
                         if (t < intersects_t_max) {
                             intersects_t_max = t ;
                             result.intersects_at_t = t ;
@@ -525,7 +533,7 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
                     }
                 }
             }
-            /*if((beta > (float) 0 || abs(abs(beta) - (float)0) < 0.015) && (gama > (float) 0 || abs(abs(gama) - (float)0) < 0.015) && ( ( beta + gama < (float) 1 ) || ( abs(abs(beta + gama) - (float) 1) < 0.015 ) ) ){
+            /*if((beta > (double) 0 || abs(abs(beta) - (double)0) < 0.015) && (gama > (double) 0 || abs(abs(gama) - (double)0) < 0.015) && ( ( beta + gama < (double) 1 ) || ( abs(abs(beta + gama) - (double) 1) < 0.015 ) ) ){
                 
                 if (t < intersects_t_max) {
                     intersects_t_max = t ;
@@ -538,8 +546,9 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
             }*/
         }
     }
-    if (!result.isIntersects && !isShadow) {
-        printf("row: %d, col: %d\n", row, col) ;
+    if (row == 610 && col == 750) {
+        printf("is shadow: %d\n", isShadow) ;
+        printf("isIntersects: %d\n", result.isIntersects) ;
     }
 
     return result ;
@@ -572,13 +581,13 @@ parser::Vec3f spec_shading (parser::Vec3f point, parser::Vec3f normal, parser::M
 
     parser::Vec3f wi_plus_wo = element_wise_addition(wi, wo) ;
 
-    float one_over_wi_plus_wo_len = (((float) 1) / length(wi_plus_wo)) ;
+    double one_over_wi_plus_wo_len = (((double) 1) / length(wi_plus_wo)) ;
 
     parser::Vec3f h = scalar_multiplication(wi_plus_wo, one_over_wi_plus_wo_len) ;
 
-    float cos_theta = std::max((float) 0, dot_product(normal_vector, h)) ;
+    double cos_theta = std::max((double) 0, dot_product(normal_vector, h)) ;
 
-    float one_over_r_square = ((float) 1 ) / pow(length(element_wise_subtraction(light.position, point)),2) ;
+    double one_over_r_square = ((double) 1 ) / pow(length(element_wise_subtraction(light.position, point)),2) ;
 
     parser::Vec3f irradiance = scalar_multiplication(light.intensity, one_over_r_square) ;
     parser::Vec3f ks = material.specular ;
@@ -600,9 +609,9 @@ parser::Vec3f diff_shading (parser::Vec3f point, parser::Vec3f normal, parser::M
     parser::Vec3f wo = element_wise_subtraction(ray.origin, point) ;
     wo = normalize(wo) ;
 
-    float cos_theta = std::max((float) 0, dot_product(wi, normal_vector)) ;
+    double cos_theta = std::max((double) 0, dot_product(wi, normal_vector)) ;
 
-    float one_over_r_square = ((float) 1 ) / pow(length(element_wise_subtraction(light.position, point)),2) ;
+    double one_over_r_square = ((double) 1 ) / pow(length(element_wise_subtraction(light.position, point)),2) ;
 
     parser::Vec3f irradiance = scalar_multiplication(light.intensity, one_over_r_square) ;
     parser::Vec3f kd = material.diffuse ;
@@ -620,7 +629,7 @@ Color get_color_of_pixel (Ray ray , int recursion_depth , int row, int col) {
     if (recursion_depth == 0) {
         distance_check = camera_imagePlane_distance;
     } else {
-        distance_check = (float) 0;
+        distance_check = (double) 0;
     }
     if (!intersection_object.isIntersects) {
         return background ;
@@ -632,7 +641,7 @@ Color get_color_of_pixel (Ray ray , int recursion_depth , int row, int col) {
         parser::Vec3f intersection_point = intersection_object.intersection_point ;
         parser::PointLight light ;
         Ray shadow ;
-        float light_point_dist ;
+        double light_point_dist ;
         Object shadow_intersection_object ;
         //ambient shading
         color_calc_temp = element_wise_addition(color_calc_temp, element_wise_multiplication(intersection_obj_mat.ambient, ambient_light)) ;
@@ -642,7 +651,7 @@ Color get_color_of_pixel (Ray ray , int recursion_depth , int row, int col) {
             light = point_lights[light_index] ;
             shadow = get_ray_for_shadow(intersection_point, light) ;
             light_point_dist = length(element_wise_subtraction(light.position, intersection_point)) ;
-            distance_check = (float) 0 ;
+            distance_check = (double) 0 ;
             shadow_intersection_object = intersect_ray_with_object(shadow, row, col, true) ;
             //printf("light_point_dist: %f\n", light_point_dist);
             //printf("shadow_int_at_t: %f\n", shadow_intersection_object.intersects_at_t);
@@ -675,7 +684,9 @@ int main(int argc , char* argv[] )
     readXml(argv[1]) ;
 
     for (int c = 0 ; c < cameras.size() ; c++ ) {
-        
+        if ( c != 2) {
+            continue;
+        }
         setCameraData(cameras[c]) ;
         image_name_ptr = &image_name[0] ;
 
@@ -696,7 +707,12 @@ int main(int argc , char* argv[] )
                 setPixelInImage(row, col , pixel_color );
             }
         }
-       
+        //Color orange = {255, 160, 0} ;
+        //for (int p = 0 ; p < 50; p++) {
+            
+          //  setPixelInImage(610, 750+p, orange) ;
+        //}
+        //setPixelInImage(750, 800, orange) ;
         write_ppm(image_name_ptr , image , image_width , image_height ) ;
     }
     clock_t end = clock() ;
