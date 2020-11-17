@@ -493,18 +493,39 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
             if(t < distance_check) {
                 continue;
             }
-            if (row == 601 && col == 199 && !isShadow) {
+            if (row == 607 && col == 202 && !isShadow) {
                 printf("beta: %f\n", beta) ;
-                printf("is beta bigger than zero: %d", beta > (float) 0) ;
-                printf("is beta equal to zero: %d", abs(beta) - (float) 0) < 0.0001;
+                printf("is beta bigger than zero: %d\n", beta > (float) 0) ;
+                printf("is beta equal to zero: %d\n", (abs(abs(beta) - (float) 0)) < 0.0001) ;
                 printf("gama: %f\n", gama) ;
-                printf("is gama bigger than zero: %d", gama > (float) 0) ;
-                printf("if gama equal to zero: %d", abs(gama) - (float) 0 < 0.0001) ;
+                printf("is gama bigger than zero: %d\n", gama > (float) 0) ;
+                printf("if gama equal to zero: %d\n", (abs(abs(gama) - (float) 0)) < 0.0001) ;
                 printf("beta+gama: %f\n", beta+gama);
+                printf("is beta+gama less than 1: %d\n", beta + gama < (float) 1);
+                printf("is beta+gama is equal to 1: %d\n", (abs(beta+gama - (float) 1)) < 0.01) ;
             }
             
-            
-            if((beta > (float) 0 || abs(beta) - (float)0 < 0.0001) && (gama > (float) 0 || abs(gama) - (float)0 < 0.0001) && ( ( beta + gama < (float) 1 ) || ( (beta + gama) - (float) 1 < 0.0001 ) ) ){
+            if (beta > (float) 0 || abs(beta - (float) 0) < 0.001 ) {
+                if (abs(beta - (float) 0) < 0.0001) {
+                    beta = (float) 0 ;
+                }
+                if (gama > (float) 0 || abs(gama - (float) 0 ) < 0.001) {
+                    if (abs(gama - (float) 0 ) < 0.0001) {
+                        gama = (float) 0 ;
+                    }
+                    if (beta + gama < (float) 1 || (beta + gama - (float) 1) < 0.001) {
+                        if (t < intersects_t_max) {
+                            intersects_t_max = t ;
+                            result.intersects_at_t = t ;
+                            result.isIntersects = true ;
+                            result.intersection_point = get_ray_point_at_t(ray, t) ;
+                            result.material = triangle_m ;
+                            result.normal_vector = normal ; 
+                        }
+                    }
+                }
+            }
+            /*if((beta > (float) 0 || abs(abs(beta) - (float)0) < 0.015) && (gama > (float) 0 || abs(abs(gama) - (float)0) < 0.015) && ( ( beta + gama < (float) 1 ) || ( abs(abs(beta + gama) - (float) 1) < 0.015 ) ) ){
                 
                 if (t < intersects_t_max) {
                     intersects_t_max = t ;
@@ -514,7 +535,7 @@ Object intersect_ray_with_object (Ray ray , int row, int col, bool isShadow) {
                     result.material = triangle_m ;
                     result.normal_vector = normal ; 
                 }
-            }
+            }*/
         }
     }
     if (!result.isIntersects && !isShadow) {
@@ -654,9 +675,7 @@ int main(int argc , char* argv[] )
     readXml(argv[1]) ;
 
     for (int c = 0 ; c < cameras.size() ; c++ ) {
-        if (c != 2) {
-            continue;
-        }
+        
         setCameraData(cameras[c]) ;
         image_name_ptr = &image_name[0] ;
 

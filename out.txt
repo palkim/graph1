@@ -1,15 +1,57 @@
-beta: 0.002488
-gama: -0.001231
-beta+gama: 0.001256
-beta: -0.002487
-gama: 1.001231
-beta+gama: 0.998744
-beta: -0.000012
-gama: 1.002506
-beta+gama: 1.002494
-beta: 1.002494
-gama: 0.000012
-beta+gama: 1.002506
+beta: -0.037500
+is beta bigger than zero: 0
+is beta equal to zero: 0
+gama: 1.278125
+is gama bigger than zero: 1
+if gama equal to zero: 0
+beta+gama: 1.240625
+is beta+gama less than 1: 0
+is beta+gama is equal to 1: 0
+beta: 0.037500
+is beta bigger than zero: 1
+is beta equal to zero: 0
+gama: -0.278125
+is gama bigger than zero: 0
+if gama equal to zero: 0
+beta+gama: -0.240625
+is beta+gama less than 1: 1
+is beta+gama is equal to 1: 0
+beta: 0.512048
+is beta bigger than zero: 1
+is beta equal to zero: 0
+gama: 0.024096
+is gama bigger than zero: 1
+if gama equal to zero: 0
+beta+gama: 0.536145
+is beta+gama less than 1: 1
+is beta+gama is equal to 1: 0
+beta: -0.512048
+is beta bigger than zero: 0
+is beta equal to zero: 0
+gama: 0.975904
+is gama bigger than zero: 1
+if gama equal to zero: 0
+beta+gama: 0.463855
+is beta+gama less than 1: 1
+is beta+gama is equal to 1: 0
+beta: 0.512658
+is beta bigger than zero: 1
+is beta equal to zero: 0
+gama: 0.512658
+is gama bigger than zero: 1
+if gama equal to zero: 0
+beta+gama: 1.025316
+is beta+gama less than 1: 0
+is beta+gama is equal to 1: 0
+beta: 1.025316
+is beta bigger than zero: 1
+is beta equal to zero: 0
+gama: -0.512658
+is gama bigger than zero: 0
+if gama equal to zero: 0
+beta+gama: 0.512658
+is beta+gama less than 1: 1
+is beta+gama is equal to 1: 0
 row: 601, col: 199
 row: 601, col: 200
 row: 601, col: 201
@@ -159011,4 +159053,4 @@ row: 799, col: 796
 row: 799, col: 797
 row: 799, col: 798
 row: 799, col: 799
-elapsed: 4.211849
+elapsed: 10.608849
